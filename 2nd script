@@ -1,0 +1,113 @@
+# YouTube API
+import feedparser
+import requests
+from PIL import Image, ImageEnhance
+from io import BytesIO
+import re
+
+lien_live_direct = ''
+miniatures_lives=[]
+from customtkinter import *
+opposition_replay=""
+opposition_direct=""
+# 🔹 Modèle regex pour détecter les matchs dans les titres
+pattern = r"([A-Za-z0-9.]+)\s+vs\.\s+([A-Za-z0-9.]+)"
+opposition_replay_liste=[]
+liste_liens_direct=[]
+liste_liens_replay=[]
+# ID de la chaîne YouTube (fixe, ne change pas)
+CHANNEL_ID = "UCp6n8d8Y8r3MwKNw_MMaouQ"
+lives=[]
+# 🎯 Stockage des miniatures et des images pour éviter leur suppression
+miniatures = []
+ctk_images = []  # ✅ Liste pour stocker les objets CTkImage
+
+def get_thumbnail(video_id):
+    """Télécharge et stocke la miniature d'une vidéo YouTube."""
+    url = f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        miniature = Image.open(BytesIO(response.content)).convert("RGBA")
+        miniatures.append(miniature)  # ✅ Copie indépendante pour éviter les références partagées
+        print(f"✅ Miniature ajoutée pour {video_id}")
+
+
+    else:
+        print(f"❌ Impossible de récupérer la miniature pour {video_id}")
+def get_thumbnail_live(video_id):
+    """Télécharge et stocke la miniature d'une vidéo YouTube."""
+    url = f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        miniature = Image.open(BytesIO(response.content)).convert("RGBA")
+        miniatures_lives.append(miniature)  # ✅ Copie indépendante pour éviter les références partagées
+        print(f"✅ Miniature ajoutée pour {video_id}")
+
+
+    else:
+        print(f"❌ Impossible de récupérer la miniature pour {video_id}")
+
+
+def lancement():
+    global lien_live_direct
+    """Récupère les dernières vidéos via l'API RSS de YouTube."""
+    global miniatures, ctk_images, opposition_direct,opposition_replay
+    miniatures.clear()
+    ctk_images.clear()
+
+    rss_url = f"https://www.youtube.com/feeds/videos.xml?channel_id={CHANNEL_ID}"
+    feed = feedparser.parse(rss_url)
+
+    if not feed.entries:
+        print("❌ Aucun contenu trouvé dans le flux RSS.")
+        return
+
+    lives = []
+
+    print("🎥 Dernières vidéos publiées :")
+    for entry in feed.entries[:12]:  # Limite aux 10 dernières vidéos
+        video_id2 = entry['yt_videoid']
+        title2 = entry.title
+        link2 = entry.link
+
+        print(f"▶ {title2} - {link2}")
+        liste_liens_replay.append(link2)
+        # Vérification avec regex
+        match = re.search(pattern, title2)
+        if match:
+            team1a, team2a = match.groups()
+            opposition_replay=f"🏆 Match détecté: {team1a} VS {team2a}"
+            opposition_replay_liste.append(opposition_replay)
+            print(opposition_replay_liste)
+            print(opposition_replay)
+        else:
+            print("⚠️ Aucun match détecté dans le titre.")
+
+        # 📌 Vérification : est-ce un live ?
+        if "LIVE" in title2.upper() or "STREAM" in title2.upper():
+            lives.append((title2, link2, video_id2))
+
+        # Ajout de la miniature
+        get_thumbnail(video_id2)
+
+    # 🔴 Affichage des lives trouvés
+    if lives:
+        print("\n🔴 Lives en cours :")
+        for i, (title, link, video_id) in enumerate(lives, start=1):
+            print(f"{i}. {title} - {link}")
+
+            match = re.search(pattern, title)
+            if match:
+                team1, team2 = match.groups()
+                opposition_direct=f"🏆 Match trouvé: {team1} vs. {team2}"
+                print(opposition_direct)
+                lien_live_direct=link
+                get_thumbnail_live(video_id)
+            else:
+                print("⚠️ Aucun match détecté.")
+    else:
+        print("\n🚫 Aucun live actuellement.")
+
+
