@@ -1,0 +1,131 @@
+# graphical user interface
+from PIL import Image,ImageEnhance, ImageTk
+import screeninfo  # ⚠️ Installe avec : pip install screeninfo
+from customtkinter import *
+from API_ytb import *
+from API_val import *
+import requests
+from io import BytesIO
+import math
+root= CTk()
+set_default_color_theme("C:/Users/Arthur/PycharmProjects/Valorant_app/---TEXTES,&,RESTES---/valorant-dark-style.json")
+x_bouton = ""
+y_bouton = -45
+root.title("Valorant Infos")
+set_appearance_mode("dark")
+# 🔹 Récupérer la résolution de l'écran
+screen = screeninfo.get_monitors()[0]  # Premier écran
+print (screen)
+root.geometry(f"{screen.width}x{screen.height}")  # Adapter la taille
+
+
+def launch_page ():
+    # 🔹 Charger l'image initiale
+    for widget in root.winfo_children():
+        widget.destroy()
+    original_image = Image.open("C:/Users/Arthur/OneDrive/fond_valo3.png")
+    enhancer = ImageEnhance.Brightness(original_image)
+    image_dark1 = enhancer.enhance(0.7)
+    ctk_image = CTkImage(light_image=image_dark1, size=(screen.width, screen.height), )
+    original_image2 = Image.open("C:/Users/Arthur/OneDrive/Banière-valopng.png")
+    enhancer = ImageEnhance.Brightness(original_image2)
+    image_dark2 = enhancer.enhance(1)
+    ctk_image2 = CTkImage(light_image=image_dark2, size=(screen.width, screen.height), )
+
+    # 🔹 Créer un Label pour afficher l'image
+    image = CTkLabel(root, text="", image=ctk_image)
+    image.pack(expand=True)  # ✅ Remplit toute la fenêtre
+    bouton_contenu=CTkButton(root, text="Contenus Utilisateurs📦",font=('courrier',20),width=1, height=100)
+    bouton_contenu.place(x=250, y=275)
+    bouton_tracker=CTkButton(root, text="Valorant Tracker🔍🎯",font=('courrier',20),width=2, height=100)
+    bouton_tracker.place(x=750, y=275)
+    bouton_VCt=CTkButton(root, text="VCT infos🏆",font=('courrier',20),width=1, height=100, command=page_vct)
+    bouton_VCt.place(x=550, y=275)
+    quitter = CTkButton(root, text="QUITTER", font=('courrier',15), command=root.destroy)
+    quitter.place(x=20, y=20)
+
+    rect_haut= CTkCanvas(root, bg="#363636", width=700, height=150,borderwidth=0)
+    rect_haut.place(x=575,y=30)
+    label_haut= CTkLabel(root,text="Que voulez-vous faire?", font=("courrier", 30, "bold"))
+    label_haut.place(x=455,y=50)
+    rect_bas= CTkCanvas(root, bg="#363636", width=500, height=250,borderwidth=0)
+    rect_bas.place(relx=1.0, rely=1.0, anchor="se", x=-30, y=-30)
+    label_haut= CTkLabel(root,text="Télécharger valorant", font=("courrier", 20, "bold"))
+    label_haut.place(relx=1.0, rely=1.0, anchor="se", x=-80, y=-140)
+    original_image3 = Image.open("C:/Users/Arthur/OneDrive/fond valo.png")
+    enhancer = ImageEnhance.Brightness(original_image3)
+    image3 = enhancer.enhance(0.7)
+
+    ctk_image3 = CTkImage(light_image=image3, size=(130, 80), )
+    bouton_Valo = CTkButton(root, image=ctk_image3, text="", width=1, height=1, command=valorant)
+    bouton_Valo.place(relx=1.0, rely=1.0, anchor="se", x=-125, y=-35)
+
+
+def page_vct():
+    import webbrowser
+    """Affichage de la page des VCT Infos"""
+    for widget in root.winfo_children():
+        widget.destroy()
+
+    # Chargement de la bannière
+    original_image4 = Image.open("C:/Users/Arthur/OneDrive/Banière-valopng.png")
+    enhancer = ImageEnhance.Brightness(original_image4)
+    image4 = enhancer.enhance(0.7)
+
+    width_ban = float(screen.width) / 1.9
+    height_ban = float(screen.height) / 6.4
+    ctk_image4 = CTkImage(light_image=image4, size=(math.ceil(width_ban), math.ceil(height_ban)))
+
+    image = CTkLabel(root, text="", image=ctk_image4)
+    image.place(x=0, y=0)
+
+    nbr = 0
+    nbr2 = -1
+    x_bouton = height_ban + 900
+    y_bouton = 5
+
+    lancement()  # 🔥 Récupération des miniatures et des matchs
+
+    if not opposition_replay_liste:
+        print("🚨 Aucune opposition trouvée, opposition_replay_liste est vide !")
+        return
+
+    while nbr < 7 and nbr2 < len(opposition_replay_liste) - 1:
+        nbr += 1
+        nbr2 += 1
+        # ✅ Vérification pour éviter IndexError
+        if nbr2 >= len(opposition_replay_liste):
+            print(f"⚠️ Erreur : Index {nbr2} hors limites pour opposition_replay_liste (taille : {len(opposition_replay_liste)})")
+            break
+
+
+        opposition_button_replay = opposition_replay_liste[nbr2]
+        lien_button_replay = liste_liens_replay[nbr2]
+        miniature_button= miniatures[nbr2]
+        ctk_image5 = CTkImage(light_image=miniature_button, size=(144, 81))
+
+        print(f"🛠️ Création du bouton avec le texte : {opposition_button_replay}")
+        bouton_minia = CTkButton(root, text=f"",image=ctk_image5, height=2, command= lambda :webbrowser.open(lien_button_replay))
+        bouton_minia.place(x=x_bouton, y=y_bouton)
+        y_bouton += 95
+
+    if lives:
+        miniature_live=miniatures_lives[0]
+        ctk_image6 = CTkImage(light_image=miniature_live, size=(512, 288))
+
+        bouton_minia2 = CTkButton(root,image=ctk_image6, text=f"",font=('courrier',50, "bold"),command=lambda: webbrowser.open(lien_live_direct))
+        bouton_minia2.place(y=300, x=150)
+    else :
+        bouton_minia2 = CTkButton(root, text=f"Aucun live en cours RIP..",height=50,width=80, font=('courrier', 50, "bold"),
+                                  command=lambda: webbrowser.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ"))
+        bouton_minia2.place(y=300, x=150)
+    bouton_retour=CTkButton(root, text= 'RETOUR', command= launch_page)
+    bouton_retour.place(relx=1.0, rely=1.0, anchor="se", x=-65, y=-3)
+    y_bouton += 90
+
+def valorant():
+    import webbrowser
+    webbrowser.open("https://playvalorant.com/en-us/download/")
+launch_page()
+root.mainloop()
+
